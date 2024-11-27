@@ -1,30 +1,30 @@
 import os
 import requests
-
-# import json
-# import logging
-# import traceback
-# import random
+import json
+import logging
+import traceback
+import random
 
 from dotenv import load_dotenv
 from fastapi import HTTPException
 
 from models.UserRegister import UserRegister
-# from models.UserLogin import UserLogin
+from models.UserLogin import UserLogin
+
 # from models.EmailActivation import EmailActivation
 
 import firebase_admin
 from firebase_admin import credentials, auth as firebase_auth
 
 from utils.database import fetch_query_as_json
-# from utils.security import create_jwt_token
+from utils.security import create_jwt_token
 
 # from azure.storage.queue import QueueClient, BinaryBase64DecodePolicy, BinaryBase64EncodePolicy
 
 
 # Configurar logging
-# logging.basicConfig(level=logging.INFO)
-# logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Inicializar la app de Firebase Admin
 cred = credentials.Certificate("secrets/firebase-secret.json")
@@ -57,33 +57,22 @@ async def register_user_firebase(user: UserRegister):
             email=user.email,
             password=user.password
         )
-        return {
-            "mensaje": "Usuario creado exitosamente",
-            "user_id": user_record.uid 
-        }
-
     except Exception as e:
         print(e)
         raise HTTPException(
             status_code=400,
             detail=f"Error al registrar usuario: {e}"
         )
+    query = f" exec proyecto_expertos.create_user @email = '{user.email}', @firstname = '{user.firstname}', @lastname = '{user.lastname}'"
+    result = {}
 
-    # query = f" exec exampleprep.create_user @email = '{user.email}', @firstname = '{user.firstname}', @lastname = '{user.lastname}'"
-    # result = {}
-    # try:
-
-    #     result_json = await fetch_query_as_json(query, is_procedure=True)
-    #     result = json.loads(result_json)[0]
-
-    #     # await insert_message_on_queue(user.email)
-
-    #     return result
-
-    # except Exception as e:
-    #     firebase_auth.delete_user(user_record.uid)
-    #     raise HTTPException(status_code=500, detail=str(e))
-
+    try:
+        result_json = await fetch_query_as_json(query, is_procedure=True)
+        result = json.loads(result_json)[0]
+        return result
+    except Exception as e:
+        firebase_auth.delete_user(user_record.uid)
+        raise HTTPException(status_code=500, detail=str(e))
 
 async def login_user_firebase(user: UserRegister):
     try:

@@ -15,7 +15,6 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 SECRET_KEY_FUNC = os.getenv("SECRET_KEY_FUNC")
 
 
-
 # Función para crear un JWT
 def create_jwt_token(firstname:str, lastname:str, email: str, active: bool):
     expiration = datetime.utcnow() + timedelta(hours=1)  # El token expira en 1 hora

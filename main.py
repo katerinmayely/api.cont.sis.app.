@@ -4,12 +4,11 @@ import uvicorn
 from typing import Union
 from fastapi import FastAPI, HTTPException, Response, Request
 from utils.database import fetch_query_as_json
-# from utils.security import validate, validate_func
+from utils.security import validate
 
 from fastapi.middleware.cors import CORSMiddleware
 from models.UserRegister import UserRegister
-# from models.UserLogin import UserLogin
-# from models.EmailActivation import EmailActivation
+from models.UserLogin import UserLogin
 
 from controllers.firebase import register_user_firebase, login_user_firebase
 # generate_activation_code
@@ -31,7 +30,7 @@ async def read_root():
     try:
         result = await fetch_query_as_json(query)
         result_dict = json.loads(result)
-        return { "data": result_dict, "version": "0.0.7" }
+        return { "data": result_dict, "version": "0.0.8" }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
@@ -40,18 +39,18 @@ async def register(user: UserRegister):
     return  await register_user_firebase(user)
 
 @app.post("/login")
-async def login_custom(user: UserRegister):
+async def login_custom(user: UserLogin):
     return await login_user_firebase(user)
 
-# @app.get("/user")
-# @validate
-# async def user(request: Request, response: Response):
-#     response.headers["Cache-Control"] = "no-cache";
-#     return {
-#         "email": request.state.email
-#         , "firstname": request.state.firstname
-#         , "lastname": request.state.lastname
-#     }
+@app.get("/user")
+@validate
+async def user(request: Request, response: Response):
+    response.headers["Cache-Control"] = "no-cache";
+    return {
+        "email": request.state.email
+        , "firstname": request.state.firstname
+        , "lastname": request.state.lastname
+    }
 
 # @app.post("/user/{email}/code")
 # @validate_func
@@ -60,5 +59,5 @@ async def login_custom(user: UserRegister):
 #     return await generate_activation_code(e)
 
     
-# if __name__ == '__main__':
-#     uvicorn.run(app, host="0.0.0.0", port=8000)
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
