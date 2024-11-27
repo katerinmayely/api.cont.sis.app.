@@ -92,43 +92,36 @@ async def login_user_firebase(user: UserRegister):
                 status_code=400,
                 detail=f"Error al autenticar usuario: {response_data['error']['message']}"
             )
-        
-        id_token = response_data["idToken"]
 
-        return {
-            "mensaje": "Usuario autenticado exitosamente",
-            "idToken": id_token
-        }
+        query = f"""select 
+                        email
+                        , firstname
+                        , lastname
+                        , active
+                    from [proyecto_expertos].[users]
+                    where email = '{ user.email }'
+                    """
 
-#         query = f"""select 
-#                         email
-#                         , firstname
-#                         , lastname
-#                         , active
-#                     from [exampleprep].[users]
-#                     where email = '{ user.email }'
-#                     """
-
-#         try:
-#             result_json = await fetch_query_as_json(query)
-#             result_dict = json.loads(result_json)
-#             return {
-#                 "message": "Usuario autenticado exitosamente",
-#                 "idToken": create_jwt_token(
-#                     result_dict[0]["firstname"],
-#                     result_dict[0]["lastname"],
-#                     user.email,
-#                     result_dict[0]["active"]
-#                 )
-#             }
-#         except Exception as e:
-#             raise HTTPException(status_code=500, detail=str(e))
+        try:
+            result_json = await fetch_query_as_json(query)
+            result_dict = json.loads(result_json)
+            return {
+                "message": "Usuario autenticado exitosamente",
+                "idToken": create_jwt_token(
+                    result_dict[0]["firstname"],
+                    result_dict[0]["lastname"],
+                    user.email,
+                    result_dict[0]["active"]
+                )
+            }
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
     except Exception as e:
-#         error_detail = {
-#             "type": type(e).__name__,
-#             "message": str(e),
-#             "traceback": traceback.format_exc()
-#         }
+        error_detail = {
+            "type": type(e).__name__,
+            "message": str(e),
+            "traceback": traceback.format_exc()
+        }
         raise HTTPException(
             status_code=400,
             detail=f"Error al login usuario: {e}"

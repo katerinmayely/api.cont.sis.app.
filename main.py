@@ -30,7 +30,7 @@ async def read_root():
     try:
         result = await fetch_query_as_json(query)
         result_dict = json.loads(result)
-        return { "data": result_dict, "version": "0.0.8" }
+        return { "data": result_dict, "version": "0.0.10" }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
