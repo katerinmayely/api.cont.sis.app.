@@ -4,14 +4,14 @@ import uvicorn
 from typing import Union
 from fastapi import FastAPI, HTTPException, Response, Request
 from utils.database import fetch_query_as_json
-from utils.security import validate
+from utils.security import validate, validate_func
 
 from fastapi.middleware.cors import CORSMiddleware
-from models.UserRegister import UserRegister
+from models.UserRegister import UserRegister 
 from models.UserLogin import UserLogin
+from models.EmailActivation import EmailActivation
 
-from controllers.firebase import register_user_firebase, login_user_firebase
-# generate_activation_code
+from controllers.firebase import register_user_firebase, login_user_firebase, generate_activation_code
 
 app = FastAPI()
 
@@ -30,7 +30,7 @@ async def read_root():
     try:
         result = await fetch_query_as_json(query)
         result_dict = json.loads(result)
-        return { "data": result_dict, "version": "0.0.10" }
+        return { "data": result_dict, "version": "0.0.11" }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
@@ -52,11 +52,12 @@ async def user(request: Request, response: Response):
         , "lastname": request.state.lastname
     }
 
-# @app.post("/user/{email}/code")
-# @validate_func
-# async def generate_code(request: Request, email: str):
-#     e = EmailActivation(email=email)
-#     return await generate_activation_code(e)
+# API que va a consumir la function app - para validar el usuario
+@app.post("/user/{email}/code")
+@validate_func  # wrapper o decorador
+async def generate_code(request: Request, email: str):
+    e = EmailActivation(email=email)
+    return await generate_activation_code(e)
 
     
 if __name__ == "__main__":

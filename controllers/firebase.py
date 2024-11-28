@@ -8,10 +8,9 @@ import random
 from dotenv import load_dotenv
 from fastapi import HTTPException
 
+from models import EmailActivation
 from models.UserRegister import UserRegister
 from models.UserLogin import UserLogin
-
-# from models.EmailActivation import EmailActivation
 
 import firebase_admin
 from firebase_admin import credentials, auth as firebase_auth
@@ -57,12 +56,14 @@ async def register_user_firebase(user: UserRegister):
             email=user.email,
             password=user.password
         )
+
     except Exception as e:
         print(e)
         raise HTTPException(
             status_code=400,
             detail=f"Error al registrar usuario: {e}"
         )
+    
     query = f" exec proyecto_expertos.create_user @email = '{user.email}', @firstname = '{user.firstname}', @lastname = '{user.lastname}'"
     result = {}
 
@@ -133,19 +134,23 @@ async def login_user_firebase(user: UserRegister):
         )
 
 
-# async def generate_activation_code(email: EmailActivation):
+async def generate_activation_code(email: EmailActivation):
 
-#     code = random.randint(100000, 999999)
-#     query = f" exec exampleprep.generate_activation_code @email = '{email.email}', @code = {code}"
-#     result = {}
-#     try:
-#         result_json = await fetch_query_as_json(query, is_procedure=True)
-#         result = json.loads(result_json)[0]
+    code = random.randint(100000, 999999)
 
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=str(e))
+    # Me daba error el sp
+    query = f"insert into proyecto_expertos.activation_codes (email, code) values ('{email.email}', {code})"
+    result = {}
 
-#     return {
-#         "message": "Código de activación generado exitosamente",
-#         "code": code
-#     }
+    try:
+        result_json = await fetch_query_as_json(query, is_procedure=True)
+        result = json.loads(result_json)
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    return {
+        "message": "Código de activación generado exitosamente",
+        "code": code,
+        "result": result
+    }
