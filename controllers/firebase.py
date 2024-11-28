@@ -19,7 +19,7 @@ from firebase_admin import credentials, auth as firebase_auth
 from utils.database import fetch_query_as_json
 from utils.security import create_jwt_token
 
-# from azure.storage.queue import QueueClient, BinaryBase64DecodePolicy, BinaryBase64EncodePolicy
+from azure.storage.queue import QueueClient, BinaryBase64DecodePolicy, BinaryBase64EncodePolicy
 
 
 # Configurar logging
@@ -34,19 +34,19 @@ firebase_admin.initialize_app(cred)
 load_dotenv()
 
 
-# # azure_sak = os.getenv('AZURE_SAK')
-# # queue_name = os.getenv('QUEUE_ACTIVATE')
+azure_sak = os.getenv('AZURE_SAK') # Connection string  
+queue_name = os.getenv('QUEUE_ACTIVATE') # Nombre de la cola
 
 
-# queue_client = QueueClient.from_connection_string(azure_sak, queue_name)
-# queue_client.message_decode_policy = BinaryBase64DecodePolicy()
-# queue_client.message_encode_policy = BinaryBase64EncodePolicy()
+queue_client = QueueClient.from_connection_string(azure_sak, queue_name)
+queue_client.message_decode_policy = BinaryBase64DecodePolicy()
+queue_client.message_encode_policy = BinaryBase64EncodePolicy()
 
-# async def insert_message_on_queue(message: str):
-#     message_bytes = message.encode('utf-8')
-#     queue_client.send_message(
-#         queue_client.message_encode_policy.encode(message_bytes)
-#     )
+async def insert_message_on_queue(message: str):
+    message_bytes = message.encode('utf-8')
+    queue_client.send_message(
+        queue_client.message_encode_policy.encode(message_bytes)
+    )
 
 
 async def register_user_firebase(user: UserRegister):
@@ -66,9 +66,14 @@ async def register_user_firebase(user: UserRegister):
     query = f" exec proyecto_expertos.create_user @email = '{user.email}', @firstname = '{user.firstname}', @lastname = '{user.lastname}'"
     result = {}
 
+    # Registrar el usuario en Azure SQL
     try:
         result_json = await fetch_query_as_json(query, is_procedure=True)
         result = json.loads(result_json)[0]
+
+        # Escribir en la cola
+        await insert_message_on_queue(user.email)
+
         return result
     except Exception as e:
         firebase_auth.delete_user(user_record.uid)
