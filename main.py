@@ -52,6 +52,15 @@ async def user(request: Request, response: Response):
         , "lastname": request.state.lastname
     }
 
+@app.get("/validation/{code}")
+async def user(request: Request, response: Response):
+    response.headers["Cache-Control"] = "no-cache";
+    return {
+        "email": request.state.email
+        , "firstname": request.state.firstname
+        , "lastname": request.state.lastname
+    }
+
 # API que va a consumir la function app - para validar el usuario
 @app.post("/user/{email}/code")
 @validate_func  # wrapper o decorador

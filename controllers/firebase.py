@@ -41,6 +41,7 @@ queue_client = QueueClient.from_connection_string(azure_sak, queue_name)
 queue_client.message_decode_policy = BinaryBase64DecodePolicy()
 queue_client.message_encode_policy = BinaryBase64EncodePolicy()
 
+# Encola el correo 
 async def insert_message_on_queue(message: str):
     message_bytes = message.encode('utf-8')
     queue_client.send_message(
@@ -72,8 +73,7 @@ async def register_user_firebase(user: UserRegister):
         result_json = await fetch_query_as_json(query, is_procedure=True)
         result = json.loads(result_json)[0]
 
-        # Escribir en la cola
-        await insert_message_on_queue(user.email)
+        # No se va a encolar el correo en el registro, sino en el login. siempre que el usuario este inactivo
 
         return result
     except Exception as e:
@@ -111,6 +111,11 @@ async def login_user_firebase(user: UserRegister):
         try:
             result_json = await fetch_query_as_json(query)
             result_dict = json.loads(result_json)
+
+            if result_dict[0]["active"] == 0:
+                # Escribir en la cola
+                await insert_message_on_queue(user.email)
+
             return {
                 "message": "Usuario autenticado exitosamente",
                 "idToken": create_jwt_token(
