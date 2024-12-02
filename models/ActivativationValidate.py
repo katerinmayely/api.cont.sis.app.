@@ -3,12 +3,10 @@ from typing import Optional
 import re
 
 class ActivationValidate(BaseModel):
-    email: str
     code: int
-
-    @validator('email')
-    def email_validation(cls, value):
-        if not re.match(r"[^@]+@[^@]+\.[^@]+", value):
-            raise ValueError('Invalid email address')
-
+    
+    @validator('code')
+    def code_validation(cls, value):
+        if not isinstance(value, int) or value < 0:
+            raise ValueError('Code must be a positive integer')
         return value

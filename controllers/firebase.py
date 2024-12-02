@@ -74,7 +74,7 @@ async def register_user_firebase(user: UserRegister):
         result = json.loads(result_json)[0]
 
         # No se va a encolar el correo en el registro, sino en el login. siempre que el usuario este inactivo
-
+        
         return result
     except Exception as e:
         firebase_auth.delete_user(user_record.uid)
@@ -112,8 +112,8 @@ async def login_user_firebase(user: UserRegister):
             result_json = await fetch_query_as_json(query)
             result_dict = json.loads(result_json)
 
+            # Si el usuario no esta activo, envia un correo con el codigo de activacion
             if result_dict[0]["active"] == 0:
-                # Escribir en la cola
                 await insert_message_on_queue(user.email)
 
             return {
@@ -123,7 +123,8 @@ async def login_user_firebase(user: UserRegister):
                     result_dict[0]["lastname"],
                     user.email,
                     result_dict[0]["active"]
-                )
+                ),
+                "active": result_dict[0]["active"]
             }
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
